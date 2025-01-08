@@ -41,10 +41,10 @@ func wake_pc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Println("Waking PC")
+
 		cmd := exec.Command("sudo", "wakeonlan", "a8:a1:59:a5:a1:9b")
 		log.Println(cmd.Run())
-
-		log.Println("Waking PC")
 	}
 }
 
