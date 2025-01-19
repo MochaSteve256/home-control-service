@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os/exec"
 
 	"github.com/gorilla/mux"
@@ -51,16 +52,54 @@ func wake_pc(w http.ResponseWriter, r *http.Request) {
 func forward(w http.ResponseWriter, r *http.Request) {
 	log.Println("Forwarding request")
 
-	target_url := "http://stevepi:5000/"
-	// get route and append to target url
-	route := mux.CurrentRoute(r)
-	path, _ := route.GetPathTemplate()
-	target_url += path
+	// Define the base URL
+	target_url := "http://stevepi:5000"
+	fullURL, err := url.Parse(target_url + r.URL.Path)
+	log.Println(fullURL)
+	if err != nil {
+		http.Error(w, "Failed to parse URL", http.StatusInternalServerError)
+		log.Println("Error parsing URL:", err)
+		return
+	}
 
-	log.Println(target_url)
+	// Create the new request to forward
+	req, err := http.NewRequest(r.Method, fullURL.String(), r.Body)
+	if err != nil {
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		log.Println("Error creating new request:", err)
+		return
+	}
 
-	http.Redirect(w, r, target_url, http.StatusTemporaryRedirect)
+	// Copy headers
+	for name, values := range r.Header {
+		for _, value := range values {
+			req.Header.Add(name, value)
+		}
+	}
 
+	// Perform the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "Failed to forward request", http.StatusBadGateway)
+		log.Println("Error forwarding request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Copy response headers and status
+	for name, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(name, value)
+		}
+	}
+	w.WriteHeader(resp.StatusCode)
+
+	// Copy response body
+	_, err = io.Copy(w, resp.Body)
+	if err != nil {
+		log.Println("Error copying response body:", err)
+	}
 }
 
 func main() {
