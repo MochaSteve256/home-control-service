@@ -48,8 +48,29 @@ func wake_pc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func forward(w http.ResponseWriter, r *http.Request) {
+	log.Println("Forwarding request")
+
+	target_url := "http://stevepi:5000/"
+	// get route and append to target url
+	route := mux.CurrentRoute(r)
+	path, _ := route.GetPathTemplate()
+	target_url += path
+
+	log.Println(target_url)
+
+	http.Redirect(w, r, target_url, http.StatusTemporaryRedirect)
+
+}
+
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/wake", wake_pc).Methods("POST")
+
+	//forwarded routes
+	router.HandleFunc("/psu", forward).Methods("POST", "GET")
+	router.HandleFunc("/led", forward).Methods("POST", "GET")
+	router.HandleFunc("/alarm", forward).Methods("POST", "GET")
+
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
