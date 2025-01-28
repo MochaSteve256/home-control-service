@@ -110,6 +110,7 @@ func main() {
 	router.HandleFunc("/psu", forward).Methods("POST", "GET")
 	router.HandleFunc("/led", forward).Methods("POST", "GET")
 	router.HandleFunc("/alarm", forward).Methods("POST", "GET")
+	router.HandleFunc("/dismiss", forward).Methods("POST", "GET")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
