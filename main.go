@@ -107,10 +107,10 @@ func main() {
 	router.HandleFunc("/wake", wake_pc).Methods("POST")
 
 	//forwarded routes
-	router.HandleFunc("/psu", forward).Methods("POST", "GET")
-	router.HandleFunc("/led", forward).Methods("POST", "GET")
-	router.HandleFunc("/alarm", forward).Methods("POST", "GET")
-	router.HandleFunc("/dismiss", forward).Methods("POST", "GET")
+	router.HandleFunc("/psu", forward)
+	router.HandleFunc("/led", forward)
+	router.HandleFunc("/alarm", forward)
+	router.HandleFunc("/dismiss", forward)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
