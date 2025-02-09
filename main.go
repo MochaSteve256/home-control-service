@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os/exec"
+	"syscall"
 
 	"github.com/gorilla/mux"
 )
@@ -53,8 +55,8 @@ func forward(w http.ResponseWriter, r *http.Request) {
 	log.Println("Forwarding request")
 
 	// Define the base URL
-	target_url := "http://stevepi:5000"
-	fullURL, err := url.Parse(target_url + r.URL.Path)
+	targetURL := "http://stevepi:5000"
+	fullURL, err := url.Parse(targetURL + r.URL.Path)
 	log.Println(fullURL)
 	if err != nil {
 		http.Error(w, "Failed to parse URL", http.StatusInternalServerError)
@@ -81,6 +83,13 @@ func forward(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		// Check for "no route to host" errors.
+		if errors.Is(err, syscall.EHOSTUNREACH) || errors.Is(err, syscall.ENETUNREACH) {
+			http.Error(w, "Server unreachable: no route to host", http.StatusServiceUnavailable)
+			log.Println("Error forwarding request (no route to host):", err)
+			return
+		}
+		// Handle any other errors
 		http.Error(w, "Failed to forward request", http.StatusBadGateway)
 		log.Println("Error forwarding request:", err)
 		return
