@@ -56,6 +56,10 @@ func forward(w http.ResponseWriter, r *http.Request) {
 
 	// Define the base URL
 	targetURL := "http://stevepi:5000"
+	//if /volume uri, change the targetURL
+	if r.URL.Path == "/volume" {
+		targetURL = "http://adrians-pc:8081"
+	}
 	fullURL, err := url.Parse(targetURL + r.URL.Path)
 	log.Println(fullURL)
 	if err != nil {
@@ -120,6 +124,7 @@ func main() {
 	router.HandleFunc("/led", forward)
 	router.HandleFunc("/alarm", forward)
 	router.HandleFunc("/dismiss", forward)
+	router.HandleFunc("/volume", forward)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
