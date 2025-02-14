@@ -58,7 +58,7 @@ func forward(w http.ResponseWriter, r *http.Request) {
 	targetURL := "http://stevepi:5000"
 	//if /volume uri, change the targetURL
 	if r.URL.Path == "/volume" {
-		targetURL = "http://adrians-pc:8081"
+		targetURL = "http://adrians-pc:8080"
 	}
 	fullURL, err := url.Parse(targetURL + r.URL.Path)
 	log.Println(fullURL)
