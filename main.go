@@ -13,6 +13,22 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// CORS middleware adds the necessary headers to each response.
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Adjust the allowed origin as needed
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func verify_token(token string) bool {
 	if token == "br4d9c2ayqrk7iswse7v8t2x" {
 		log.Println("Authenticated")
@@ -26,6 +42,7 @@ func wake_pc(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		var requestBody map[string]interface{}
 		if err := json.Unmarshal(body, &requestBody); err != nil {
@@ -45,7 +62,6 @@ func wake_pc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("Waking PC")
-
 		cmd := exec.Command("sudo", "wakeonlan", "a8:a1:59:a5:a1:9b")
 		log.Println(cmd.Run())
 	}
@@ -56,7 +72,7 @@ func forward(w http.ResponseWriter, r *http.Request) {
 
 	// Define the base URL
 	targetURL := "http://stevepi:5000"
-	//if /volume uri, change the targetURL
+	// If the path is /volume, change the targetURL
 	if r.URL.Path == "/volume" {
 		targetURL = "http://adrians-pc:8080"
 	}
@@ -76,7 +92,7 @@ func forward(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Copy headers
+	// Copy headers from the original request
 	for name, values := range r.Header {
 		for _, value := range values {
 			req.Header.Add(name, value)
@@ -87,28 +103,24 @@ func forward(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Check for "no route to host" errors.
 		if errors.Is(err, syscall.EHOSTUNREACH) || errors.Is(err, syscall.ENETUNREACH) {
 			http.Error(w, "Server unreachable: no route to host", http.StatusServiceUnavailable)
 			log.Println("Error forwarding request (no route to host):", err)
 			return
 		}
-		// Handle any other errors
 		http.Error(w, "Failed to forward request", http.StatusBadGateway)
 		log.Println("Error forwarding request:", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	// Copy response headers and status
+	// Copy response headers
 	for name, values := range resp.Header {
 		for _, value := range values {
 			w.Header().Add(name, value)
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
-
-	// Copy response body
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		log.Println("Error copying response body:", err)
@@ -117,9 +129,10 @@ func forward(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/wake", wake_pc).Methods("POST")
+	// Use the CORS middleware on all routes
+	router.Use(corsMiddleware)
 
-	//forwarded routes
+	router.HandleFunc("/wake", wake_pc).Methods("POST", "OPTIONS")
 	router.HandleFunc("/psu", forward)
 	router.HandleFunc("/led", forward)
 	router.HandleFunc("/alarm", forward)
