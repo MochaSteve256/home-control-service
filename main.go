@@ -16,10 +16,13 @@ import (
 // CORS middleware adds the necessary headers to each response.
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Adjust the allowed origin as needed
+		// Allow all origins or adjust as needed
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		// Allow the necessary methods
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Include 'token' in allowed headers along with others
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, token")
+
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
