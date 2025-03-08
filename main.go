@@ -142,6 +142,7 @@ func main() {
 	router.HandleFunc("/dismiss", forward)
 	router.HandleFunc("/volume", forward)
 	router.HandleFunc("/alarm/actions", forward)
+	router.HandleFunc("/dim", forward)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
