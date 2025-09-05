@@ -76,7 +76,7 @@ func forward(w http.ResponseWriter, r *http.Request) {
 	// Define the base URL
 	targetURL := "http://stevepi:5000"
 	// If the path is /volume, change the targetURL
-	if r.URL.Path == "/volume" {
+	if r.URL.Path == "/volume" || r.URL.Path == "/music" || r.URL.Path == "/lock" {
 		targetURL = "http://adrians-pc:8080"
 	}
 	fullURL, err := url.Parse(targetURL + r.URL.Path)
@@ -135,14 +135,22 @@ func main() {
 	// Use the CORS middleware on all routes
 	router.Use(corsMiddleware)
 
+	// Waking done by MochaPi
 	router.HandleFunc("/wake", wake_pc).Methods("POST", "OPTIONS")
+
+	// PowerHub routes
 	router.HandleFunc("/psu", forward)
 	router.HandleFunc("/led", forward)
 	router.HandleFunc("/alarm", forward)
-	router.HandleFunc("/dismiss", forward)
-	router.HandleFunc("/volume", forward)
+	router.HandleFunc("/alarm/{id}", forward) // <-- handles /alarm/<id>
 	router.HandleFunc("/alarm/actions", forward)
+	router.HandleFunc("/dismiss", forward)
 	router.HandleFunc("/dim", forward)
+
+	// PC routes
+	router.HandleFunc("/volume", forward)
+	router.HandleFunc("/music", forward)
+	router.HandleFunc("/lock", forward)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
