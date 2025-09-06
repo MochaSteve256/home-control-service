@@ -76,7 +76,7 @@ func forward(w http.ResponseWriter, r *http.Request) {
 	// Define the base URL
 	targetURL := "http://stevepi:5000"
 	// If the path is /volume, change the targetURL
-	if r.URL.Path == "/volume" || r.URL.Path == "/music" || r.URL.Path == "/lock" {
+	if r.URL.Path == "/volume" || r.URL.Path == "/music" || r.URL.Path == "/lock" || r.URL.Path == "/shutdown" {
 		targetURL = "http://adrians-pc:8080"
 	}
 	fullURL, err := url.Parse(targetURL + r.URL.Path)
@@ -151,6 +151,7 @@ func main() {
 	router.HandleFunc("/volume", forward)
 	router.HandleFunc("/music", forward)
 	router.HandleFunc("/lock", forward)
+	router.HandleFunc("/shutdown", forward)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
