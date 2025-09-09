@@ -19,7 +19,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		// Allow all origins or adjust as needed
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		// Allow the necessary methods
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH")
 		// Include 'token' in allowed headers along with others
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, token")
 
